@@ -75,17 +75,14 @@ void setup() {
   }
 
 
-
-
-
 }
 
 
 void loop() {
   float Vout = analogRead(tempSensePin)/310.48; // Voltage at pin
   float temp = (Vout-0.5)/0.010; // convert the analog reading to voltage and then to temperature in Celsius
-
-  if(1)
+  Serial.println(temp);
+  /*if(1)
   {
     switch (etat)
     {
@@ -130,7 +127,7 @@ void loop() {
     default:
       break;
     }
-   /* if(temp >= 24 ){
+    if(temp >= 24 ){
       digitalWrite(LED, HIGH);
       delay(1000);
       digitalWrite(LED, LOW);
@@ -150,10 +147,10 @@ void loop() {
     
     
     Serial.print("temperature: ");
-    Serial.println(temp);*/
+    Serial.println(temp);
   }
-  else{digitalWrite(LEDG, LOW);}
-  
+  else{digitalWrite(LEDG, LOW);}*/
+
   // put your main code here, to run repeatedly:
 }
 
@@ -161,3 +158,6 @@ void loop() {
 int myFunction(int x, int y) {
   return x + y;
 }
+
+
+
