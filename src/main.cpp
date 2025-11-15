@@ -24,6 +24,28 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 WiFiClient wificlient;
 PubSubClient client(host, 1883, callback, wificlient);
+String translateEncryptionType(wifi_auth_mode_t encryptionType)
+{
+
+  switch (encryptionType)
+  {
+  case (WIFI_AUTH_OPEN):
+    return "Open";
+  case (WIFI_AUTH_WEP):
+    return "WEP";
+  case (WIFI_AUTH_WPA_PSK):
+    return "WPA_PSK";
+  case (WIFI_AUTH_WPA2_PSK):
+    return "WPA2_PSK";
+  case (WIFI_AUTH_WPA_WPA2_PSK):
+    return "WPA_WPA2_PSK";
+  case (WIFI_AUTH_WPA2_ENTERPRISE):
+    return "WPA2_ENTERPRISE";
+  default:  
+    return "UNKNOWN";
+  }
+  return "UNKNOWN";
+}
 
 void connectToNetwork()
 {
@@ -38,34 +60,53 @@ void connectToNetwork()
   Serial.println("Connected to network");
 }
 
+void scanNetworks()
+{
+
+  int numberOfNetworks = WiFi.scanNetworks();
+
+  // Add delay so the terminal can catch up
+  delay(3000);
+
+  Serial.print("Number of networks found: ");
+  Serial.println(numberOfNetworks);
+
+  for (int i = 0; i < numberOfNetworks; i++)
+  {
+
+    Serial.print("Network name: ");
+    Serial.println(WiFi.SSID(i));
+
+    Serial.print("Signal strength: ");
+    Serial.println(WiFi.RSSI(i));
+
+    Serial.print("MAC address: ");
+    Serial.println(WiFi.BSSIDstr(i));
+
+    Serial.print("Encryption type: ");
+    String encryptionTypeDescription = translateEncryptionType(WiFi.encryptionType(i));
+    Serial.println(encryptionTypeDescription);
+    Serial.println("-----------------------");
+  }
+}
 
 
 
 
- enum code{
-    zero,   //0
-    un,     //1
-    deux,   //1
-    trois,   //3
-    quatre  //4
-};
-
-int etat;
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(tempSensePin, INPUT);
-  pinMode(button, INPUT_PULLUP);
-  pinMode(coussin, OUTPUT);
-  pinMode(LEDB, OUTPUT);
-  pinMode(LEDR, OUTPUT);
-  pinMode(LEDG, OUTPUT);
-  Serial.begin(9600);
-  etat = zero;
- // Connect to WiFi
-  connectToNetwork();
-  Serial.println(WiFi.localIP());
+   Serial.begin(115200);
 
+  // Print MAC address
+  Serial.println("MCU MAC address: " + WiFi.macAddress());
+
+
+  scanNetworks();
+  connectToNetwork();
+
+  Serial.println(WiFi.macAddress());
+  Serial.println(WiFi.localIP());
+  
   // Connect to Thinger.io
   if (client.connect("RASPBERRY", "Godson", "nado2375")) {
     Serial.println("Connected to Thinger.io");
@@ -79,84 +120,21 @@ void setup() {
 
 
 void loop() {
+
+  scanNetworks();
+  client.loop();
   float Vout = analogRead(tempSensePin)/310.48; // Voltage at pin
   float temp = (Vout-0.5)/0.010; // convert the analog reading to voltage and then to temperature in Celsius
-  Serial.println(temp);
-  /*if(1)
-  {
-    switch (etat)
-    {
-    case zero:
-      digitalWrite(LEDB, HIGH);
-      delay(1000);
-      digitalWrite(LEDB, LOW);
-      delay(1000);
-      Serial.print("temperature: ");
-      Serial.println(temp);
-      if (temp >= 24)
-      {
-        etat = zero;
-      }
-      else if (temp <= 23)
-      {
-        etat = un;
-      }
-      
-      break;
-    case un:
-      digitalWrite(coussin, HIGH);
-      digitalWrite(LEDR, HIGH);
-      delay(500);
-      digitalWrite(LEDR, LOW);
-      delay(500);
-      Serial.print("temperature: ");
-      Serial.println(temp);
-      
-      if (temp >= 24)
-      {
-        etat = zero;
 
-      }
-      else if (temp <= 22)
-      {
-        etat = un;
-      }
-      
-      break;
+  String topic = "RASPBERRY/temperature";
+  String payload = String(temp);
+  String subscibtion = "#";
+  client.publish(topic.c_str(),payload.c_str());
+  Serial.println("Published: " + payload);
+  
+  client.subscribe("inTopic");
 
-    default:
-      break;
-    }
-    if(temp >= 24 ){
-      digitalWrite(LED, HIGH);
-      delay(1000);
-      digitalWrite(LED, LOW);
-      delay(1000);
-      Serial.print("temperature: ");
-      Serial.println(temp);
 
-    }
-    else if(temp <= 22){
-      digitalWrite(LED, HIGH);
-      delay(500);
-      digitalWrite(LED, LOW);
-      delay(500);
-      Serial.print("temperature: ");
-      Serial.println(temp);
-    }
-    
-    
-    Serial.print("temperature: ");
-    Serial.println(temp);
-  }
-  else{digitalWrite(LEDG, LOW);}*/
-
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }
 
 
