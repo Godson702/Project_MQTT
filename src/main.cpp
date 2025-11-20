@@ -121,7 +121,7 @@ void setup() {
 
 void loop() {
 
-  scanNetworks();
+  //scanNetworks();
   client.loop();
   float Vout = analogRead(tempSensePin)/310.48; // Voltage at pin
   float temp = (Vout-0.5)/0.100; // convert the analog reading to voltage and then to temperature in Celsius
