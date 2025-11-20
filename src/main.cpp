@@ -124,13 +124,14 @@ void loop() {
   scanNetworks();
   client.loop();
   float Vout = analogRead(tempSensePin)/310.48; // Voltage at pin
-  float temp = (Vout-0.5)/0.010; // convert the analog reading to voltage and then to temperature in Celsius
+  float temp = (Vout-0.5)/0.100; // convert the analog reading to voltage and then to temperature in Celsius
 
   String topic = "RASPBERRY/temperature";
   String payload = String(temp);
   String subscibtion = "#";
   client.publish(topic.c_str(),payload.c_str());
   Serial.println("Published: " + payload);
+  
   
   client.subscribe("inTopic");
 
