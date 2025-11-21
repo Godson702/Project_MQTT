@@ -3,7 +3,6 @@
 #include "secret.h"
 #include "WiFi.h"
 
-
 const char *ssid = WIFI_SSID;
 const char *password = WIFI_PASSWORD;
 
@@ -15,11 +14,31 @@ const int coussin = D4;
 const int LEDB = 25;
 const int LEDR = 17;
 const int LEDG = 16;
+String topic = "RASPBERRY/temperature";
+String subscribtion = "switch";
 
 const char *host = "maisonneuve.aws.thinger.io";
-const char port = 80;
-void callback(char* topic, byte* payload, unsigned int length) {
-  // handle message arrived
+
+void callback(char *subscribtion, byte *payload, unsigned int length)
+{
+  Serial.print("Message arrived [");
+  Serial.print(subscribtion);
+  Serial.print("] ");
+  for (unsigned int i = 0; i < length; i++)
+  {
+    Serial.print((char)payload[i]);
+  }
+
+
+  if (payload[0] == '1' )
+  {
+    Serial.print((char)payload[0]);
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  else  
+  {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
 }
 
 WiFiClient wificlient;
@@ -41,7 +60,7 @@ String translateEncryptionType(wifi_auth_mode_t encryptionType)
     return "WPA_WPA2_PSK";
   case (WIFI_AUTH_WPA2_ENTERPRISE):
     return "WPA2_ENTERPRISE";
-  default:  
+  default:
     return "UNKNOWN";
   }
   return "UNKNOWN";
@@ -90,64 +109,66 @@ void scanNetworks()
   }
 }
 
-void Clear() {
+void Clear()
+{
   Serial1.write(0xFE);
   Serial1.write(0x51);
   delay(100);
 }
 
+void setup()
+{
+  Serial.begin(9600);
 
-
-
-void setup() {
-   Serial.begin(9600);
-  
-   Serial1.begin(9600, SERIAL_8N1, D7, D6);
+  Serial1.begin(9600, SERIAL_8N1, D7, D6);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // Print MAC address
   Serial.println("MCU MAC address: " + WiFi.macAddress());
-
 
   scanNetworks();
   connectToNetwork();
 
   Serial.println(WiFi.macAddress());
   Serial.println(WiFi.localIP());
-  
+
   // Connect to Thinger.io
-  if (client.connect("RASPBERRY", "Godson", "nado2375")) {
+  if (client.connect("RASPBERRY", "Godson", "nado2375"))
+  {
     Serial.println("Connected to Thinger.io");
-  } else {
+  }
+  else
+  {
     Serial.print("Connection failed, rc=");
     Serial.print(client.state());
   }
   Clear();
 
-
+  client.subscribe(subscribtion.c_str());
 }
 
+static unsigned long lastMsg = 0;
+void loop()
+{
 
-void loop() {
-
-  //scanNetworks();
+  // scanNetworks();
   client.loop();
-  float Vout = analogRead(tempSensePin)/310.48; // Voltage at pin
-  float temp = (Vout-0.5)/0.100; // convert the analog reading to voltage and then to temperature in Celsius
 
-  String topic = "RASPBERRY/temperature";
-  String payload = String(temp);
-  String subscibtion = "#";
-  client.publish(topic.c_str(),payload.c_str());
-  Serial.println("Published: " + payload);
-  Clear();
-  Serial1.print("T:");
-  Serial1.print(temp, 1);
-  Serial1.println(" C");
-  delay(500);
-  client.subscribe("inTopic");
+  unsigned long now = millis();
+  if (now - lastMsg > 2000)
+  {
+    lastMsg = now;
+    float Vout = analogRead(tempSensePin) / 310.48; // Voltage at pin
+    float temp = (Vout - 0.5) / 0.100;              // convert the analog reading to voltage and then to temperature in Celsius
 
+    String topic = "RASPBERRY/temperature";
+    String payload = String(temp);
 
+    client.publish(topic.c_str(), payload.c_str());
+    Serial.println("Published: " + payload);
+//    Clear();
+//    Serial1.print("T:");
+//    Serial1.print(temp, 1);
+//    Serial1.println(" C");
+  }
 }
-
-
-
