@@ -90,12 +90,19 @@ void scanNetworks()
   }
 }
 
+void Clear() {
+  Serial1.write(0xFE);
+  Serial1.write(0x51);
+  delay(100);
+}
 
 
 
 
 void setup() {
-   Serial.begin(115200);
+   Serial.begin(9600);
+  
+   Serial1.begin(9600, SERIAL_8N1, D7, D6);
 
   // Print MAC address
   Serial.println("MCU MAC address: " + WiFi.macAddress());
@@ -114,6 +121,7 @@ void setup() {
     Serial.print("Connection failed, rc=");
     Serial.print(client.state());
   }
+  Clear();
 
 
 }
@@ -131,8 +139,11 @@ void loop() {
   String subscibtion = "#";
   client.publish(topic.c_str(),payload.c_str());
   Serial.println("Published: " + payload);
-  
-  
+  Clear();
+  Serial1.print("T:");
+  Serial1.print(temp, 1);
+  Serial1.println(" C");
+  delay(500);
   client.subscribe("inTopic");
 
 
